@@ -1,0 +1,150 @@
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useCategoriesRealtime } from '@/hooks/useCategories';
+
+interface ProductsDropdownProps {
+  isActive?: boolean;
+}
+
+const ProductsDropdown = ({ isActive }: ProductsDropdownProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout>();
+  const { t } = useTranslation();
+  const { language, isRTL } = useLanguage();
+  const navigate = useNavigate();
+  const { categories = [], isLoading } = useCategoriesRealtime();
+
+  // Handle responsive behavior
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Handle mouse enter for desktop
+  const handleMouseEnter = () => {
+    if (isMobile) return;
+    clearTimeout(timeoutRef.current);
+    setIsOpen(true);
+  };
+
+  // Handle mouse leave for desktop
+  const handleMouseLeave = () => {
+    if (isMobile) return;
+    timeoutRef.current = setTimeout(() => {
+      setIsOpen(false);
+    }, 150); // Small delay to allow moving to dropdown
+  };
+
+  // Handle click for mobile
+  const handleClick = (e: React.MouseEvent) => {
+    if (isMobile) {
+      e.preventDefault();
+      setIsOpen(!isOpen);
+    }
+  };
+
+  // Handle category click
+  const handleCategoryClick = (categoryEn: string) => {
+    navigate(`/products/category/${encodeURIComponent(categoryEn)}`);
+    setIsOpen(false);
+  };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen && isMobile) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [isOpen, isMobile]);
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative group"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <button
+        onClick={handleClick}
+        className={`px-5 py-3 text-sm font-semibold transition-colors border-r border-white/10 flex items-center gap-1.5 ${
+          isActive
+            ? 'bg-primary text-white'
+            : 'text-white/85 hover:bg-white/10 hover:text-white'
+        }`}
+      >
+        {t('nav.products')}
+        <ChevronDown
+          className={`w-3.5 h-3.5 transition-transform duration-300 ${
+            isOpen ? 'rotate-180' : ''
+          }`}
+        />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            className={`absolute ${
+              isRTL ? 'right-0' : 'left-0'
+            } top-full mt-0 w-48 bg-white rounded-md shadow-lg border border-border z-40 overflow-hidden`}
+          >
+            {isLoading ? (
+              <div className="px-4 py-3 text-sm text-muted-foreground text-center">
+                Loading categories...
+              </div>
+            ) : categories.length === 0 ? (
+              <div className="px-4 py-3 text-sm text-muted-foreground text-center">
+                No categories available
+              </div>
+            ) : (
+              <div className="py-1">
+                {categories.map((category, index) => {
+                  const displayName = language === 'ar' ? category.name_ar : category.name;
+                  const isLast = index === categories.length - 1;
+
+                  return (
+                    <motion.button
+                      key={category.id}
+                      initial={{ opacity: 0, x: isRTL ? 10 : -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.03, duration: 0.15 }}
+                      onClick={() => handleCategoryClick(category.name)}
+                      className={`w-full px-4 py-2.5 text-sm text-left text-foreground hover:bg-primary hover:text-white transition-colors ${
+                        !isLast ? 'border-b border-border/30' : ''
+                      }`}
+                    >
+                      {displayName}
+                    </motion.button>
+                  );
+                })}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export default ProductsDropdown;
