@@ -41,3 +41,26 @@ export const useProduct = (id: string) => {
     enabled: !!id,
   });
 };
+
+// -----------------------------------------------------------------------------
+// live search helper – used by the navbar search suggestions. Queries the
+// database for products whose name contains the provided query string. We
+// enable the query only when there's actually text to search for, keeping the
+// cache keyed by the query string itself.
+// -----------------------------------------------------------------------------
+export const useProductSearch = (query?: string) => {
+  return useQuery({
+    queryKey: ['productSearch', query],
+    queryFn: async () => {
+      if (!query) return [] as DBProduct[];
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .or(`name.ilike.%${query}%,name_ar.ilike.%${query}%`);
+      if (error) throw error;
+      return (data ?? []) as unknown as DBProduct[];
+    },
+    enabled: !!query && query.length > 0,
+    staleTime: 1000 * 60 * 5, // five minutes
+  });
+};

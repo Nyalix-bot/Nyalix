@@ -65,6 +65,7 @@ const resources = {
         title: "Our Products",
         subtitle: "Browse our comprehensive catalog of medical equipment",
         search: "Search products...",
+        noResults: "No products found",
         allCategories: "All Categories",
         addToCart: "Add to Cart",
         inStock: "In Stock",

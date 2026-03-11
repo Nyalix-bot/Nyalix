@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ShoppingCart, Menu, X, Globe, ChevronDown, LogIn, LogOut, Shield, UserCircle, Search } from 'lucide-react';
+import LiveSearch from './LiveSearch';
 import { useCart } from '@/contexts/CartContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -49,14 +50,7 @@ const Navbar = () => {
 
           {/* Search bar — centered, IndoSurgicals style */}
           <div className="flex-1 max-w-xl hidden md:flex items-center">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search products..."
-                className="w-full pl-10 pr-4 py-2 rounded border border-border bg-background text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-              />
-            </div>
+            <LiveSearch />
           </div>
 
           {/* Right icons */}
