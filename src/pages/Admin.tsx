@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { type LucideIcon, Plus, Pencil, Trash2, Package, ShoppingBag, Users, MessageSquare, Award, BarChart3, X, Upload, Bell, Settings, Eye, EyeOff, AlertTriangle, ImageIcon, Mail, Download, Menu } from 'lucide-react';
 import AdminExhibitions from '@/components/AdminExhibitions';
 import AdminAnalytics from '@/components/AdminAnalytics';
+import AdminQuotesTab from '@/components/AdminQuotesTab';
 import { AdminSidebar, type AdminTab } from '@/components/AdminSidebar';
 import { useCategoriesRealtime, type Category } from '@/hooks/useCategories';
 import { generateAndSendNotifications } from '@/lib/notifications';
@@ -1141,6 +1142,9 @@ const Admin = () => {
             ))}
           </div>
         )}
+
+        {/* Quotes */}
+        {tab === 'quotes' && <AdminQuotesTab />}
 
         {/* Users */}
         {tab === 'users' &&

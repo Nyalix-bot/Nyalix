@@ -5,10 +5,11 @@ import { useCart } from '@/contexts/CartContext';
 import { useProduct, useProducts } from '@/hooks/useProducts';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Check, X, Home, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Check, X, Home, ChevronRight, FileText } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import CategorySidebar from '@/components/CategorySidebar';
 import StarRating from '@/components/StarRating';
+import QuoteRequestModal from '@/components/QuoteRequestModal';
 
 interface Review {
   id: string;
@@ -31,6 +32,7 @@ const ProductDetail = () => {
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const navigate = useNavigate();
 
@@ -166,6 +168,21 @@ const ProductDetail = () => {
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-gold rounded-lg font-semibold transition-all shadow-gold disabled:cursor-not-allowed text-gray-50 bg-primary shadow-none opacity-100">
               <ShoppingCart className="w-5 h-5" />{t('products.addToCart')}
             </button>
+            
+            <button 
+              onClick={() => setShowQuoteModal(true)}
+              className="w-full sm:w-auto ml-2 inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-muted hover:bg-muted/80 text-foreground rounded-lg font-semibold transition-all"
+            >
+              <FileText className="w-5 h-5" />
+              Request Quote
+            </button>
+            
+            <QuoteRequestModal 
+              isOpen={showQuoteModal}
+              onClose={() => setShowQuoteModal(false)}
+              productId={product.id}
+              productName={name}
+            />
             <div className="mt-10">
               <h3 className="font-display font-semibold text-foreground text-lg mb-4">{t('products.specifications')}</h3>
               <div className="grid grid-cols-2 gap-3">

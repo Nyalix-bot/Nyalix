@@ -1,9 +1,9 @@
 import React from 'react';
-import { type LucideIcon, BarChart3, Package, ShoppingBag, Award, ImageIcon, MessageSquare, Mail, Users, Settings, X, Tags } from 'lucide-react';
+import { type LucideIcon, BarChart3, Package, ShoppingBag, Award, ImageIcon, MessageSquare, Mail, Users, Settings, X, Tags, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-export type AdminTab = 'dashboard' | 'products' | 'categories' | 'orders' | 'certificates' | 'exhibitions' | 'messages' | 'users' | 'newsletter' | 'settings';
+export type AdminTab = 'dashboard' | 'products' | 'categories' | 'orders' | 'certificates' | 'exhibitions' | 'messages' | 'quotes' | 'users' | 'newsletter' | 'settings';
 
 interface SidebarItem {
   key: AdminTab;
@@ -33,6 +33,7 @@ const items: SidebarItem[] = [
   { key: 'certificates', icon: Award, label: 'Certificates' },
   { key: 'exhibitions', icon: ImageIcon, label: 'Exhibitions' },
   { key: 'messages', icon: MessageSquare, label: 'Messages' },
+  { key: 'quotes', icon: FileText, label: 'Quotes' },
   { key: 'newsletter', icon: Mail, label: 'Newsletter' },
   { key: 'users', icon: Users, label: 'Users' },
   { key: 'settings', icon: Settings, label: 'Settings' },
