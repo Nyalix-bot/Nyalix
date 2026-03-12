@@ -166,19 +166,29 @@ const Navbar = () => {
               
               {/* Mobile Products with Categories */}
               <div>
-                <button
-                  onClick={() => setMobileProductsOpen(!mobileProductsOpen)}
-                  className={`w-full px-4 py-2.5 rounded text-sm font-medium transition-all flex items-center justify-between ${
-                    isActive('/products') ? 'bg-primary text-primary-foreground' : 'text-foreground/70 hover:bg-muted'
-                  }`}
-                >
-                  <span>{t('nav.products')}</span>
-                  <ChevronDown
-                    className={`w-3.5 h-3.5 transition-transform duration-300 ${
-                      mobileProductsOpen ? 'rotate-180' : ''
+                <div className="flex items-center">
+                  <Link
+                    to="/products"
+                    onClick={() => setMobileOpen(false)}
+                    className={`flex-1 px-4 py-2.5 rounded text-sm font-medium transition-all ${
+                      isActive('/products') ? 'bg-primary text-primary-foreground' : 'text-foreground/70 hover:bg-muted'
                     }`}
-                  />
-                </button>
+                  >
+                    {t('nav.products')}
+                  </Link>
+                  <button
+                    onClick={() => setMobileProductsOpen(!mobileProductsOpen)}
+                    className={`px-3 py-2.5 rounded text-sm font-medium transition-all ${
+                      isActive('/products') ? 'bg-primary text-primary-foreground' : 'text-foreground/70 hover:bg-muted'
+                    }`}
+                  >
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 transition-transform duration-300 ${
+                        mobileProductsOpen ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+                </div>
                 <AnimatePresence>
                   {mobileProductsOpen && (
                     <motion.div

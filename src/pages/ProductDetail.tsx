@@ -2,6 +2,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCart } from '@/contexts/CartContext';
+import { toast } from 'sonner';
 import { useProduct, useProducts } from '@/hooks/useProducts';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
@@ -28,6 +29,7 @@ const ProductDetail = () => {
   const { data: product, isLoading } = useProduct(id || '');
   const { data: allProducts = [] } = useProducts();
   const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, any>>({});
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -74,6 +76,26 @@ const ProductDetail = () => {
   const avgRating = reviews.length ?
   reviews.reduce((s, r) => s + r.rating, 0) / reviews.length :
   0;
+
+  // derive variant groups for display
+  const variants = (product?.variants || []) as any[];
+  const colorVariants = variants.filter(v => v.variant_type === 'color' && v.enabled);
+  const sizeVariants = variants.filter(v => v.variant_type === 'size' && v.enabled);
+  const otherVariants = variants.filter(v => v.variant_type !== 'color' && v.variant_type !== 'size' && v.enabled);
+
+  // compute images to use based on selected color
+  const effectiveImages = (() => {
+    const sel = selectedVariants.color;
+    if (sel && sel.image) return [sel.image];
+    return product?.images || [];
+  })();
+
+  useEffect(() => {
+    // reset gallery index when images change
+    setSelectedImage(0);
+  }, [effectiveImages]);
+
+  const currentVariant = Object.values(selectedVariants).find((v) => v) || null;
 
   if (isLoading) return <div className="pt-20 min-h-screen flex items-center justify-center bg-background text-muted-foreground">Loading...</div>;
 
@@ -163,9 +185,73 @@ const ProductDetail = () => {
                   <span className="text-xs text-muted-foreground">{product.stock_quantity} units available</span>
                   }
             </div>
+
+            {/* Variant selectors */}
+            {colorVariants.length > 0 && (
+              <div className="mb-4">
+                <p className="text-sm font-medium text-foreground mb-1">Color</p>
+                <div className="flex gap-2">
+                  {colorVariants.map((v) => (
+                    <button
+                      key={v.id}
+                      onClick={() => setSelectedVariants((prev) => ({ ...prev, color: v }))}
+                      aria-label={v.variant_value}
+                      className={`w-8 h-8 rounded-full border-2 transition-colors ${selectedVariants.color?.id === v.id ? 'border-accent' : 'border-border'}`}
+                      style={{ backgroundColor: v.variant_color_code || v.variant_value }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {sizeVariants.length > 0 && (
+              <div className="mb-4">
+                <p className="text-sm font-medium text-foreground mb-1">Size</p>
+                <div className="flex gap-2 flex-wrap">
+                  {sizeVariants.map((v) => (
+                    <button
+                      key={v.id}
+                      onClick={() => setSelectedVariants((prev) => ({ ...prev, size: v }))}
+                      className={`px-3 py-1 rounded-lg border-2 text-sm ${selectedVariants.size?.id === v.id ? 'border-accent' : 'border-border'}`}
+                    >
+                      {v.variant_value}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {otherVariants.length > 0 && (
+              <div className="mb-4">
+                <p className="text-sm font-medium text-foreground mb-1">Options</p>
+                <div className="flex gap-2 flex-wrap">
+                  {otherVariants.map((v) => (
+                    <button
+                      key={v.id}
+                      onClick={() => setSelectedVariants((prev) => ({ ...prev, [v.variant_type]: v }))}
+                      className={`px-3 py-1 rounded-lg border-2 text-sm ${selectedVariants[v.variant_type]?.id === v.id ? 'border-accent' : 'border-border'}`}
+                    >
+                      {v.variant_value}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <p className="text-muted-foreground leading-relaxed mb-8">{desc}</p>
-            <button onClick={() => product.in_stock && addToCart(product)} disabled={!product.in_stock}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-gold rounded-lg font-semibold transition-all shadow-gold disabled:cursor-not-allowed text-gray-50 bg-primary shadow-none opacity-100">
+            <button
+              onClick={() => {
+                if (!product.in_stock) return;
+                // require size selection if there are size variants
+                if (sizeVariants.length > 0 && !selectedVariants.size) {
+                  toast.error('Please select a size');
+                  return;
+                }
+                const variantToSend = currentVariant as any;
+                addToCart(product, variantToSend || undefined);
+              }}
+              disabled={!product.in_stock}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-gold rounded-lg font-semibold transition-all shadow-gold disabled:cursor-not-allowed text-gray-50 bg-primary shadow-none opacity-100"
+            >
               <ShoppingCart className="w-5 h-5" />{t('products.addToCart')}
             </button>
             
@@ -182,6 +268,8 @@ const ProductDetail = () => {
               onClose={() => setShowQuoteModal(false)}
               productId={product.id}
               productName={name}
+              variantType={currentVariant?.variant_type}
+              variantValue={currentVariant?.variant_value}
             />
             <div className="mt-10">
               <h3 className="font-display font-semibold text-foreground text-lg mb-4">{t('products.specifications')}</h3>

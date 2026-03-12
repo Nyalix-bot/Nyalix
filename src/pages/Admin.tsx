@@ -44,10 +44,31 @@ class AdminErrorBoundary extends React.Component<{ children: React.ReactNode }, 
   }
 }
 
+interface ProductVariant {
+  id?: string;
+  variant_type: string;
+  variant_value: string;
+  variant_color_code?: string;
+  image?: string;
+  stock_quantity?: number;
+  enabled?: boolean;
+}
+
 interface Product {
-  id: string;name: string;name_ar: string;description: string;description_ar: string;
-  category: string;category_ar: string;price: number;images: string[];in_stock: boolean;
-  stock_quantity: number;specifications: Record<string, string>;featured: boolean;
+  id: string;
+  name: string;
+  name_ar: string;
+  description: string;
+  description_ar: string;
+  category: string;
+  category_ar: string;
+  price: number;
+  images: string[];
+  in_stock: boolean;
+  stock_quantity: number;
+  specifications: Record<string, string>;
+  featured: boolean;
+  variants?: ProductVariant[];
 }
 
 interface Order {
@@ -223,6 +244,55 @@ const Admin = () => {
     };
   }, [user, isAdmin]);
 
+  // mapping used to make it easy for admins when they choose a category
+  const categoryVariantMap: Record<string, 'color' | 'size' | 'other'> = {
+    'Hospital Beds': 'color',
+    'Wheelchairs': 'color',
+    'Lab Coats': 'size',
+    'Medical Gloves': 'size',
+  };
+
+  const addVariant = () => {
+    setEditProduct((prev) => {
+      const variants = prev?.variants ? [...prev.variants] : [];
+      variants.push({
+        variant_type: categoryVariantMap[prev?.category || ''] || 'other',
+        variant_value: '',
+        stock_quantity: 0,
+        enabled: true,
+      });
+      return { ...prev, variants };
+    });
+  };
+
+  const removeVariant = (index: number) => {
+    setEditProduct((prev) => {
+      if (!prev?.variants) return prev;
+      const variants = [...prev.variants];
+      variants.splice(index, 1);
+      return { ...prev, variants };
+    });
+  };
+
+  const updateVariantField = (index: number, field: keyof ProductVariant, value: any) => {
+    setEditProduct((prev) => {
+      if (!prev?.variants) return prev;
+      const variants = [...prev.variants];
+      (variants[index] as any)[field] = value;
+      return { ...prev, variants };
+    });
+  };
+
+  const handleVariantImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const path = `${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from('product-images').upload(path, file);
+    if (error) { toast.error(error.message); return; }
+    const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(path);
+    updateVariantField(index, 'image', urlData.publicUrl);
+  };
+
   const saveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editProduct) return;
@@ -241,15 +311,41 @@ const Admin = () => {
       featured: editProduct.featured ?? false
     };
 
+    let productId: string | undefined;
+
     if (editProduct.id) {
+      productId = editProduct.id;
       const { error } = await supabase.from('products').update(payload).eq('id', editProduct.id);
       if (error) {toast.error(error.message);return;}
       toast.success('Product updated');
     } else {
-      const { error } = await supabase.from('products').insert(payload);
+      const { data, error } = await supabase.from('products').insert(payload).select('id').single();
       if (error) {toast.error(error.message);return;}
       toast.success('Product added');
+      productId = data?.id;
     }
+
+    // synchronize variants if any
+    if (productId && editProduct.variants) {
+      // remove old variants and re-insert current set
+      await supabase.from('product_variants').delete().eq('product_id', productId);
+      const inserts = editProduct.variants.map((v) => ({
+        product_id: productId,
+        variant_type: v.variant_type,
+        variant_value: v.variant_value,
+        variant_color_code: v.variant_color_code || null,
+        image: v.image || null,
+        stock_quantity: v.stock_quantity || 0,
+        enabled: v.enabled ?? true,
+      }));
+      if (inserts.length > 0) {
+        const { error: varErr } = await supabase.from('product_variants').insert(inserts);
+        if (varErr) {
+          console.error('failed syncing variants', varErr);
+        }
+      }
+    }
+
     setShowForm(false);
     setEditProduct(null);
     fetchProducts();
@@ -630,7 +726,7 @@ const Admin = () => {
         <div>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-display font-semibold text-foreground">Manage Products</h2>
-              <button onClick={() => {setEditProduct({ stock_quantity: 0 });setShowForm(true);}}
+              <button onClick={() => {setEditProduct({ stock_quantity: 0, variants: [] });setShowForm(true);}}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90">
                 <Plus className="w-4 h-4" /> Add Product
               </button>
@@ -759,6 +855,75 @@ const Admin = () => {
                       </div>
                     </div>
 
+                    {/* Variants */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-medium text-foreground">Variants</label>
+                        <button type="button" onClick={addVariant} className="text-xs text-accent hover:underline flex items-center gap-1">
+                          <Plus className="w-3 h-3" />Add Variant
+                        </button>
+                      </div>
+                      <div className="space-y-2">
+                        {editProduct?.variants?.map((v, idx) => (
+                          <div key={idx} className="border border-border rounded-lg p-3">
+                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                              <select
+                                value={v.variant_type}
+                                onChange={(e) => updateVariantField(idx, 'variant_type', e.target.value)}
+                                className="px-2 py-1 rounded-lg border border-border bg-background text-sm"
+                              >
+                                <option value="">Type</option>
+                                <option value="color">Color</option>
+                                <option value="size">Size</option>
+                                <option value="other">Other</option>
+                              </select>
+                              <input
+                                type="text"
+                                placeholder="Value"
+                                value={v.variant_value}
+                                onChange={(e) => updateVariantField(idx, 'variant_value', e.target.value)}
+                                className="px-2 py-1 rounded-lg border border-border bg-background text-sm"
+                              />
+                              {v.variant_type === 'color' && (
+                                <input
+                                  type="color"
+                                  value={v.variant_color_code || '#000000'}
+                                  onChange={(e) => updateVariantField(idx, 'variant_color_code', e.target.value)}
+                                  className="w-8 h-8 p-0 border-0"
+                                />
+                              )}
+                              <input
+                                type="number"
+                                min="0"
+                                placeholder="Stock"
+                                value={v.stock_quantity ?? 0}
+                                onChange={(e) => updateVariantField(idx, 'stock_quantity', Number(e.target.value))}
+                                className="w-20 px-2 py-1 rounded-lg border border-border bg-background text-sm"
+                              />
+                              <label className="flex items-center gap-1 text-sm">
+                                <input
+                                  type="checkbox"
+                                  checked={v.enabled ?? true}
+                                  onChange={(e) => updateVariantField(idx, 'enabled', e.target.checked)}
+                                />
+                                Enabled
+                              </label>
+                              <button type="button" onClick={() => removeVariant(idx)} className="text-destructive hover:text-destructive/80">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <div>
+                              {v.image && <img src={v.image} alt="" className="w-20 h-20 object-cover rounded-lg mb-1" />}
+                              <label className="flex items-center gap-2 px-3 py-1 bg-muted rounded-lg text-xs cursor-pointer hover:bg-border">
+                                <Upload className="w-4 h-4" /> Upload Image
+                                <input type="file" accept="image/*" onChange={(e) => handleVariantImageUpload(e, idx)} className="hidden" />
+                              </label>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
                     <div className="flex items-center gap-4">
                       <label className="flex items-center gap-2 text-sm">
                         <input type="checkbox" checked={editProduct?.in_stock ?? true} onChange={(e) => setEditProduct((prev) => ({ ...prev, in_stock: e.target.checked }))} />
@@ -794,7 +959,12 @@ const Admin = () => {
                     {p.in_stock ? 'In Stock' : 'Out of Stock'}
                   </span>
                   <div className="flex gap-1">
-                    <button onClick={() => {setEditProduct(p);setShowForm(true);}} className="p-2 text-muted-foreground hover:text-foreground"><Pencil className="w-4 h-4" /></button>
+                    <button onClick={async () => {
+                      // load variants before putting into edit state
+                      const { data: variants } = await supabase.from('product_variants').select('*').eq('product_id', p.id);
+                      setEditProduct({ ...p, variants: variants ?? [] });
+                      setShowForm(true);
+                    }} className="p-2 text-muted-foreground hover:text-foreground"><Pencil className="w-4 h-4" /></button>
                     <button onClick={() => deleteProduct(p.id)} className="p-2 text-destructive hover:text-destructive/80"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 </div>

@@ -1,17 +1,18 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { DBProduct } from '@/hooks/useProducts';
+import type { DBProduct, DBProductVariant } from '@/hooks/useProducts';
 
 interface CartItem {
   product: DBProduct;
+  variant?: DBProductVariant;
   quantity: number;
 }
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (product: DBProduct) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  addToCart: (product: DBProduct, variant?: DBProductVariant) => void;
+  removeFromCart: (productId: string, variant?: DBProductVariant) => void;
+  updateQuantity: (productId: string, quantity: number, variant?: DBProductVariant) => void;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
@@ -49,23 +50,29 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [items, isHydrated]);
 
-  const addToCart = (product: DBProduct) => {
+  const addToCart = (product: DBProduct, variant?: DBProductVariant) => {
     setItems(prev => {
-      const existing = prev.find(i => i.product.id === product.id);
+      const existing = prev.find(i => i.product.id === product.id && i.variant?.id === variant?.id);
       if (existing) {
-        return prev.map(i => i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i);
+        return prev.map(i =>
+          i.product.id === product.id && i.variant?.id === variant?.id
+            ? { ...i, quantity: i.quantity + 1 }
+            : i
+        );
       }
-      return [...prev, { product, quantity: 1 }];
+      return [...prev, { product, variant, quantity: 1 }];
     });
   };
 
-  const removeFromCart = (productId: string) => {
-    setItems(prev => prev.filter(i => i.product.id !== productId));
+  const removeFromCart = (productId: string, variant?: DBProductVariant) => {
+    setItems(prev => prev.filter(i => !(i.product.id === productId && i.variant?.id === variant?.id)));
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
-    if (quantity <= 0) { removeFromCart(productId); return; }
-    setItems(prev => prev.map(i => i.product.id === productId ? { ...i, quantity } : i));
+  const updateQuantity = (productId: string, quantity: number, variant?: DBProductVariant) => {
+    if (quantity <= 0) { removeFromCart(productId, variant); return; }
+    setItems(prev => prev.map(i =>
+      i.product.id === productId && i.variant?.id === variant?.id ? { ...i, quantity } : i
+    ));
   };
 
   const clearCart = () => setItems([]);
