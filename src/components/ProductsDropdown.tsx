@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -80,21 +80,32 @@ const ProductsDropdown = ({ isActive }: ProductsDropdownProps) => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <button
-        onClick={handleClick}
-        className={`px-5 py-3 text-sm font-semibold transition-colors border-r border-white/10 flex items-center gap-1.5 ${
-          isActive
-            ? 'bg-primary text-white'
-            : 'text-white/85 hover:bg-white/10 hover:text-white'
-        }`}
-      >
-        {t('nav.products')}
-        <ChevronDown
-          className={`w-3.5 h-3.5 transition-transform duration-300 ${
-            isOpen ? 'rotate-180' : ''
+      <div className="flex items-center">
+        <Link
+          to="/products"
+          className={`px-5 py-3 text-sm font-semibold transition-colors ${
+            isActive
+              ? 'bg-primary text-white'
+              : 'text-white/85 hover:bg-white/10 hover:text-white'
           }`}
-        />
-      </button>
+        >
+          {t('nav.products')}
+        </Link>
+        <button
+          onClick={handleClick}
+          className={`px-2 py-3 text-sm font-semibold transition-colors border-r border-white/10 flex items-center ${
+            isActive
+              ? 'bg-primary text-white'
+              : 'text-white/85 hover:bg-white/10 hover:text-white'
+          }`}
+        >
+          <ChevronDown
+            className={`w-3.5 h-3.5 transition-transform duration-300 ${
+              isOpen ? 'rotate-180' : ''
+            }`}
+          />
+        </button>
+      </div>
 
       <AnimatePresence>
         {isOpen && (
