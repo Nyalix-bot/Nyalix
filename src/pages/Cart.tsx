@@ -69,14 +69,18 @@ const Cart = () => {
       return;
     }
 
-    const orderItems = items.map((item) => ({
-      order_id: order.id,
-      product_id: item.product.id,
-      product_name: language === 'ar' ? item.product.name_ar : item.product.name,
-      quantity: item.quantity,
-      price: item.product.price * item.quantity,
-      product_image_url: item.product.images?.[0] || ''
-    }));
+    const orderItems = items.map((item) => {
+      const baseName = language === 'ar' ? item.product.name_ar : item.product.name;
+      const product_name = item.variant ? `${baseName} (${item.variant.variant_value})` : baseName;
+      return {
+        order_id: order.id,
+        product_id: item.product.id,
+        product_name,
+        quantity: item.quantity,
+        price: item.product.price * item.quantity,
+        product_image_url: item.product.images?.[0] || ''
+      };
+    });
 
     await supabase.from('order_items').insert(orderItems);
 
@@ -137,15 +141,16 @@ const Cart = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-4">
               {items.map((item) => {
-              const name = language === 'ar' ? item.product.name_ar : item.product.name;
+              const baseName = language === 'ar' ? item.product.name_ar : item.product.name;
+              const name = item.variant ? `${baseName} (${item.variant.variant_value})` : baseName;
               return (
-                <div key={item.product.id} className="flex gap-4 bg-card rounded-xl border border-border p-4 shadow-luxury">
+                <div key={`${item.product.id}-${item.variant?.id || ''}`} className="flex gap-4 bg-card rounded-xl border border-border p-4 shadow-luxury">
                     <img src={item.product.images?.[0] || '/placeholder.svg'} alt={name} className="w-24 h-24 rounded-lg object-cover opacity-100" />
                     <div className="flex-1">
                       <h3 className="font-display font-semibold text-foreground">{name}</h3>
                       <p className="text-gold font-bold mt-1">${item.product.price.toLocaleString()}</p>
                       <div className="flex items-center gap-3 mt-2">
-                        <button onClick={() => updateQuantity(item.product.id, item.quantity - 1)} className="p-1 rounded bg-muted hover:bg-border transition-colors"><Minus className="w-3 h-3" /></button>
+                        <button onClick={() => updateQuantity(item.product.id, item.quantity - 1, item.variant)} className="p-1 rounded bg-muted hover:bg-border transition-colors"><Minus className="w-3 h-3" /></button>
                         <span className="text-sm font-medium w-8 text-center">{item.quantity}</span>
                         <button onClick={() => {
                         const stock = item.product.stock_quantity ?? 0;
@@ -153,11 +158,11 @@ const Cart = () => {
                           toast.warning(`⚠️ Only ${stock} units available in stock.`);
                           return;
                         }
-                        updateQuantity(item.product.id, item.quantity + 1);
+                        updateQuantity(item.product.id, item.quantity + 1, item.variant);
                       }} className="p-1 rounded bg-muted hover:bg-border transition-colors"><Plus className="w-3 h-3" /></button>
                       </div>
                     </div>
-                    <button onClick={() => removeFromCart(item.product.id)} className="self-start p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors">
+                    <button onClick={() => removeFromCart(item.product.id, item.variant)} className="self-start p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>);

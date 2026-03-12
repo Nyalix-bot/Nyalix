@@ -11,6 +11,8 @@ interface QuoteRequestModalProps {
   onClose: () => void;
   productId?: string;
   productName?: string;
+  variantType?: string | null;
+  variantValue?: string | null;
 }
 
 export const QuoteRequestModal: React.FC<QuoteRequestModalProps> = ({
@@ -28,11 +30,23 @@ export const QuoteRequestModal: React.FC<QuoteRequestModalProps> = ({
     phone: '',
     country: '',
     product: productName,
+    variantType: variantType || '',
+    variantValue: variantValue || '',
     quantity: 1,
     message: '',
   });
 
   const [loading, setLoading] = useState(false);
+
+  // keep form values in sync when parent changes product/variant props
+  React.useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      product: productName,
+      variantType: variantType || '',
+      variantValue: variantValue || '',
+    }));
+  }, [productName, variantType, variantValue]);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -85,6 +99,8 @@ export const QuoteRequestModal: React.FC<QuoteRequestModalProps> = ({
         country: formData.country,
         product_id: productId || null,
         product_name: formData.product,
+        variant_type: formData.variantType || null,
+        variant_value: formData.variantValue || null,
         quantity: formData.quantity,
         message: formData.message,
         status: 'Pending',
@@ -103,6 +119,8 @@ export const QuoteRequestModal: React.FC<QuoteRequestModalProps> = ({
         phone: '',
         country: '',
         product: productName,
+        variantType: variantType || '',
+        variantValue: variantValue || '',
         quantity: 1,
         message: '',
       });

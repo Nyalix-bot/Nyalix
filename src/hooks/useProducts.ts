@@ -1,6 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface DBProductVariant {
+  id: string;
+  product_id: string;
+  variant_type: string;
+  variant_value: string;
+  variant_color_code?: string | null;
+  image?: string | null;
+  stock_quantity?: number | null;
+  enabled?: boolean | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface DBProduct {
   id: string;
   name: string;
@@ -17,6 +30,7 @@ export interface DBProduct {
   featured: boolean;
   created_at: string;
   updated_at: string;
+  variants?: DBProductVariant[];
 }
 
 export const useProducts = () => {
@@ -34,9 +48,24 @@ export const useProduct = (id: string) => {
   return useQuery({
     queryKey: ['product', id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('products').select('*').eq('id', id).maybeSingle();
-      if (error) throw error;
-      return data as unknown as DBProduct | null;
+      if (!id) return null;
+      const { data: product, error: prodErr } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+      if (prodErr) throw prodErr;
+
+      if (!product) return null;
+
+      // separately fetch variants for this product
+      const { data: variants, error: varErr } = await supabase
+        .from('product_variants')
+        .select('*')
+        .eq('product_id', id);
+      if (varErr) throw varErr;
+
+      return { ...product, variants: (variants ?? []) as DBProductVariant[] } as DBProduct;
     },
     enabled: !!id,
   });
