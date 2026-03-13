@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -45,12 +45,10 @@ const ProductsDropdown = ({ isActive }: ProductsDropdownProps) => {
     }, 150); // Small delay to allow moving to dropdown
   };
 
-  // Handle click for mobile
+  // Handle click for both desktop and mobile
   const handleClick = (e: React.MouseEvent) => {
-    if (isMobile) {
-      e.preventDefault();
-      setIsOpen(!isOpen);
-    }
+    e.preventDefault();
+    setIsOpen(!isOpen);
   };
 
   // Handle category click
@@ -67,11 +65,11 @@ const ProductsDropdown = ({ isActive }: ProductsDropdownProps) => {
       }
     };
 
-    if (isOpen && isMobile) {
+    if (isOpen) {
       document.addEventListener('click', handleClickOutside);
       return () => document.removeEventListener('click', handleClickOutside);
     }
-  }, [isOpen, isMobile]);
+  }, [isOpen]);
 
   return (
     <div
@@ -80,21 +78,25 @@ const ProductsDropdown = ({ isActive }: ProductsDropdownProps) => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <button
-        onClick={handleClick}
-        className={`px-5 py-3 text-sm font-semibold transition-colors border-r border-white/10 flex items-center gap-1.5 ${
-          isActive
-            ? 'bg-primary text-white'
-            : 'text-white/85 hover:bg-white/10 hover:text-white'
-        }`}
-      >
-        {t('nav.products')}
-        <ChevronDown
-          className={`w-3.5 h-3.5 transition-transform duration-300 ${
-            isOpen ? 'rotate-180' : ''
-          }`}
-        />
-      </button>
+      <div className={`px-5 py-3 text-sm font-semibold transition-colors border-r border-white/10 flex items-center gap-1.5 ${
+        isActive
+          ? 'bg-primary text-white'
+          : 'text-white/85 hover:bg-white/10 hover:text-white'
+      }`}>
+        <Link to="/products" className="flex items-center">
+          {t('nav.products')}
+        </Link>
+        <button
+          onClick={handleClick}
+          className="flex items-center"
+        >
+          <ChevronDown
+            className={`w-3.5 h-3.5 transition-transform duration-300 ${
+              isOpen ? 'rotate-180' : ''
+            }`}
+          />
+        </button>
+      </div>
 
       <AnimatePresence>
         {isOpen && (
