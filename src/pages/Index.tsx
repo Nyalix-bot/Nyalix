@@ -10,7 +10,7 @@ const Index = () => {
   return (
     <div>
       <HeroSection />
-      {/* Brief intro text like IndoSurgicals */}
+
       <div className="bg-white py-10 border-b border-border">
         <div className="container mx-auto px-4 text-center max-w-3xl">
           <p className="text-muted-foreground text-base leading-relaxed">

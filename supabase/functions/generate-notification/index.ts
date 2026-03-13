@@ -110,7 +110,7 @@ async function generateNotifications(
       type: 'email',
       event: 'registration',
       recipient: profile.email,
-      subject: 'Welcome to Nyalix Global Care!',
+      subject: 'Welcome to Nyalix Medical PVT LTD!',
       message: emailHtml,
       userId
     })
@@ -219,12 +219,12 @@ function generateWelcomeEmail(profile: ProfileRecord): string {
     </head>
     <body>
       <div class="header">
-        <img src="https://your-logo-url.com/logo.png" alt="Nyalix Global Care" style="max-width: 200px;">
-        <h1>Welcome to Nyalix Global Care!</h1>
+        <img src="https://your-logo-url.com/logo.png" alt="Nyalix Medical PVT LTD" style="max-width: 200px;">
+        <h1>Welcome to Nyalix Medical PVT LTD!</h1>
       </div>
       <div class="content">
         <h2>Dear ${profile.full_name},</h2>
-        <p>Thank you for registering with Nyalix Global Care! We're excited to have you as part of our community.</p>
+        <p>Thank you for registering with Nyalix Medical PVT LTD! We're excited to have you as part of our community.</p>
         <p>Your account has been successfully created with the following details:</p>
         <ul>
           <li><strong>Name:</strong> ${profile.full_name}</li>
@@ -235,7 +235,7 @@ function generateWelcomeEmail(profile: ProfileRecord): string {
         <p>If you have any questions, please don't hesitate to contact us.</p>
       </div>
       <div class="footer">
-        <p>&copy; 2024 Nyalix Global Care. All rights reserved.</p>
+        <p>&copy; 2024 Nyalix Medical PVT LTD. All rights reserved.</p>
       </div>
     </body>
     </html>
