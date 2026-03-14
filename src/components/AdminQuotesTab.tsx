@@ -249,7 +249,7 @@ const AdminQuotesTab = () => {
             onClick={() => setStatusFilter(filter)}
             className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${
               statusFilter === filter
-                ? 'bg-gradient-gold text-primary'
+                ? 'bg-gradient-gold text-white'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80'
             }`}
           >

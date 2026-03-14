@@ -340,8 +340,12 @@ const Admin = () => {
       toast.error(error.message);
       return;
     }
+    
+    // Immediately update local state for instant UI feedback
+    setCategoriesList((prev) => prev.filter((cat) => cat.id !== id));
+    
     toast.success('Category deleted');
-    // The hook will automatically update via real-time subscription
+    // The hook will automatically update via real-time subscription for other components
   };
 
   const updateOrderStatus = async (id: string, status: string) => {
@@ -770,7 +774,7 @@ const Admin = () => {
                       </label>
                     </div>
 
-                    <button type="submit" className="w-full px-6 py-3 bg-gradient-gold rounded-lg font-semibold text-primary hover:opacity-90 transition-all shadow-gold">
+                    <button type="submit" className="w-full px-6 py-3 bg-gradient-gold rounded-lg font-semibold text-white hover:opacity-90 transition-all shadow-gold">
                       {editProduct?.id ? 'Update' : 'Create'} Product
                     </button>
                   </form>
@@ -931,7 +935,7 @@ const Admin = () => {
 
                   <button
                     type="submit"
-                    className="w-full px-6 py-3 bg-gradient-gold rounded-lg font-semibold text-primary hover:opacity-90 transition-all shadow-gold"
+                    className="w-full px-6 py-3 bg-gradient-gold rounded-lg font-semibold text-white hover:opacity-90 transition-all shadow-gold"
                   >
                     {editCategory?.id ? 'Update' : 'Create'} Category
                   </button>
@@ -1382,7 +1386,7 @@ const AdminSettingsTab = () => {
           </div>
         </div>
         <button type="submit" disabled={saving}
-        className="w-full px-6 py-3 bg-gradient-gold rounded-lg font-semibold text-primary hover:opacity-90 transition-all shadow-gold disabled:opacity-50">
+        className="w-full px-6 py-3 bg-gradient-gold rounded-lg font-semibold text-white hover:opacity-90 transition-all shadow-gold disabled:opacity-50">
           {saving ? 'Saving...' : 'Save Changes'}
         </button>
       </form>
