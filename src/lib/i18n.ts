@@ -161,6 +161,18 @@ const resources = {
           enterResponse: "Enter your response...",
         },
       },
+      order: {
+        searchPlaceholder: "Search orders...",
+        noOrders: "No orders yet.",
+        noMatch: "No orders match your search.",
+        status: {
+          pending: "Pending",
+          processing: "Processing",
+          shipped: "Shipped",
+          delivered: "Delivered",
+          cancelled: "Cancelled",
+        },
+      },
       certifications: {
         title: "Our Certifications",
         subtitle: "We maintain the highest standards of quality and compliance",
@@ -466,6 +478,18 @@ const resources = {
           quoteDeleted: "تم حذف طلب عرض السعر",
           markAsRead: "تحديد كمقروء",
           enterResponse: "أدخل ردك...",
+        },
+      },
+      order: {
+        searchPlaceholder: "ابحث عن الطلبات...",
+        noOrders: "لا توجد طلبات بعد.",
+        noMatch: "لا توجد طلبات مطابقة لبحثك.",
+        status: {
+          pending: "قيد الانتظار",
+          processing: "قيد المعالجة",
+          shipped: "تم الشحن",
+          delivered: "تم التسليم",
+          cancelled: "أُلغي",
         },
       },
       certifications: {

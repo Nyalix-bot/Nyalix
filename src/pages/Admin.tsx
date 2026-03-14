@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -102,6 +103,7 @@ interface UserProfile {id: string;user_id: string;full_name: string;email: strin
 
 const Admin = () => {
   const { user, isAdmin, loading } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [tab, setTab] = useState<AdminTab>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -607,7 +609,7 @@ const Admin = () => {
                       </button>
                     </div>
                 )}
-                  {orders.length === 0 && <p className="text-muted-foreground text-sm">No orders yet.</p>}
+                  {orders.length === 0 && <p className="text-muted-foreground text-sm">{t('order.noOrders')}</p>}
                 </div>
               </div>
               <div className="bg-card rounded-xl border border-border p-5 shadow-luxury">
@@ -1127,7 +1129,7 @@ const Admin = () => {
               <div className="relative w-full sm:w-auto">
                 <input
                   type="text"
-                  placeholder="Search orders by status, customer, or order ID..."
+                  placeholder={t('order.searchPlaceholder')}
                   value={orderSearch}
                   onChange={(e) => setOrderSearch(e.target.value)}
                   className="w-full sm:w-80 px-4 py-2 pl-10 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -1154,8 +1156,16 @@ const Admin = () => {
               const filteredOrders = orders.filter((o) => {
                 if (!orderSearch.trim()) return true;
                 const searchTerm = orderSearch.toLowerCase();
+                const statusLabels = [
+                  o.status,
+                  t(`order.status.${o.status}`, { lng: 'en' }),
+                  t(`order.status.${o.status}`, { lng: 'ar' }),
+                ].filter(Boolean) as string[];
+
+                const statusMatch = statusLabels.some((label) => label.toLowerCase().includes(searchTerm));
+
                 return (
-                  o.status.toLowerCase().includes(searchTerm) ||
+                  statusMatch ||
                   o.shipping_name.toLowerCase().includes(searchTerm) ||
                   o.shipping_email?.toLowerCase().includes(searchTerm) ||
                   o.id.toLowerCase().includes(searchTerm) ||
@@ -1170,7 +1180,7 @@ const Admin = () => {
                     <div className="text-center py-12 bg-card rounded-xl border border-border">
                       <Package className="w-12 h-12 text-muted-foreground mx-auto opacity-50 mb-3" />
                       <p className="text-muted-foreground">
-                        {orderSearch.trim() ? 'No orders match your search.' : 'No orders yet.'}
+                        {orderSearch.trim() ? t('order.noMatch') : t('order.noOrders')}
                       </p>
                     </div>
                   ) : (
@@ -1195,11 +1205,11 @@ const Admin = () => {
                   </div>
                   <select value={o.status} onChange={(e) => updateOrderStatus(o.id, e.target.value)}
               className="px-3 py-1.5 rounded-lg border border-border bg-background text-sm text-foreground">
-                    <option value="pending">Pending</option>
-                    <option value="processing">Processing</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="cancelled">Cancelled</option>
+                    <option value="pending">{t('order.status.pending')}</option>
+                    <option value="processing">{t('order.status.processing')}</option>
+                    <option value="shipped">{t('order.status.shipped')}</option>
+                    <option value="delivered">{t('order.status.delivered')}</option>
+                    <option value="cancelled">{t('order.status.cancelled')}</option>
                   </select>
                   <button onClick={() => deleteOrder(o.id)} className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors" title="Delete order">
                     <Trash2 className="w-4 h-4" />
