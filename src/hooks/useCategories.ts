@@ -91,74 +91,93 @@ export const useCategoriesRealtime = () => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
     
     const setupSubscription = () => {
-      channel = supabase
-        .channel('public:categories', {
-          config: {
-            presence: { key: 'categories_listener' },
-          },
-        })
-        .on(
-          'postgres_changes',
-          { 
-            event: 'INSERT',
-            schema: 'public', 
-            table: 'categories' 
-          },
-          (payload) => {
-            const newCategory = payload.new as Category;
-            setCategories((prev) => 
-              [...prev, newCategory].sort((a, b) => a.order_index - b.order_index)
-            );
-          }
-        )
-        .on(
-          'postgres_changes',
-          { 
-            event: 'UPDATE',
-            schema: 'public', 
-            table: 'categories' 
-          },
-          (payload) => {
-            const updatedCategory = payload.new as Category;
-            setCategories((prev) =>
-              prev
-                .map((cat) => (cat.id === updatedCategory.id ? updatedCategory : cat))
-                .sort((a, b) => a.order_index - b.order_index)
-            );
-          }
-        )
-        .on(
-          'postgres_changes',
-          { 
-            event: 'DELETE',
-            schema: 'public', 
-            table: 'categories' 
-          },
-          (payload) => {
-            setCategories((prev) => prev.filter((cat) => cat.id !== payload.old.id));
-          }
-        )
-        .subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            setError(null);
-          } else if (status === 'CHANNEL_ERROR') {
-            // Attempt to reconnect
-            if (channel) {
-              supabase.removeChannel(channel);
+      try {
+        channel = supabase
+          .channel('public:categories', {
+            config: {
+              presence: { key: 'categories_listener' },
+            },
+          })
+          .on(
+            'postgres_changes',
+            { 
+              event: 'INSERT',
+              schema: 'public', 
+              table: 'categories' 
+            },
+            (payload) => {
+              const newCategory = payload.new as Category;
+              setCategories((prev) => 
+                [...prev, newCategory].sort((a, b) => a.order_index - b.order_index)
+              );
             }
-            setTimeout(setupSubscription, 2000);
-          }
-        });
+          )
+          .on(
+            'postgres_changes',
+            { 
+              event: 'UPDATE',
+              schema: 'public', 
+              table: 'categories' 
+            },
+            (payload) => {
+              const updatedCategory = payload.new as Category;
+              setCategories((prev) =>
+                prev
+                  .map((cat) => (cat.id === updatedCategory.id ? updatedCategory : cat))
+                  .sort((a, b) => a.order_index - b.order_index)
+              );
+            }
+          )
+          .on(
+            'postgres_changes',
+            { 
+              event: 'DELETE',
+              schema: 'public', 
+              table: 'categories' 
+            },
+            (payload) => {
+              setCategories((prev) => prev.filter((cat) => cat.id !== payload.old.id));
+            }
+          )
+          .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              console.log('useCategoriesRealtime: Successfully subscribed to categories');
+              setError(null);
+            } else if (status === 'CHANNEL_ERROR') {
+              console.warn('useCategoriesRealtime: Failed to subscribe to categories realtime, attempting reconnect');
+              // Attempt to reconnect
+              if (channel) {
+                supabase.removeChannel(channel);
+              }
+              setTimeout(setupSubscription, 2000);
+            } else if (status === 'TIMED_OUT') {
+              console.warn('useCategoriesRealtime: Subscription timed out, attempting reconnect');
+              if (channel) {
+                supabase.removeChannel(channel);
+              }
+              setTimeout(setupSubscription, 2000);
+            } else if (status === 'CLOSED') {
+              console.log('useCategoriesRealtime: Subscription closed');
+            }
+          });
+      } catch (error) {
+        console.warn('useCategoriesRealtime: Error setting up subscription:', error);
+        setError(error instanceof Error ? error : new Error('Failed to setup realtime subscription'));
+      }
     };
 
     setupSubscription();
 
-    // Cleanup on unmount
-    return () => {
-      if (channel) {
+  // Cleanup on unmount
+  return () => {
+    if (channel) {
+      try {
         supabase.removeChannel(channel);
+      } catch (error) {
+        console.warn('useCategoriesRealtime: Error removing channel:', error);
       }
-    };
+    }
+  };
   }, []);
 
   return { categories, isLoading, error };

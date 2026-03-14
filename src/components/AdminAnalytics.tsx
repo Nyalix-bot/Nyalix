@@ -83,13 +83,51 @@ const AdminAnalytics: React.FC<Props> = ({ orders, users, products }) => {
 
   // subscribe to new product views so dashboard stays up-to-date
   useEffect(() => {
-    const channel = supabase.channel('admin-product-views')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'product_views' }, (payload) => {
-        setViews((prev) => [...prev, payload.new as { product_id: string; created_at: string }]);
-      })
-      .subscribe();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    
+    const setupSubscription = () => {
+      try {
+        channel = supabase
+          .channel('admin-product-views')
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'product_views' }, (payload) => {
+            try {
+              setViews((prev) => [...prev, payload.new as { product_id: string; created_at: string }]);
+            } catch (error) {
+              console.warn('AdminAnalytics: Error updating views state:', error);
+            }
+          })
+          .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              console.log('AdminAnalytics: Successfully subscribed to product_views');
+            } else if (status === 'CHANNEL_ERROR') {
+              console.warn('AdminAnalytics: Failed to subscribe to product_views realtime, falling back to polling');
+              // Could implement polling fallback here if needed
+            } else if (status === 'TIMED_OUT') {
+              console.warn('AdminAnalytics: Realtime subscription timed out, attempting reconnect');
+              // Attempt to reconnect
+              if (channel) {
+                supabase.removeChannel(channel);
+              }
+              setTimeout(setupSubscription, 5000);
+            } else if (status === 'CLOSED') {
+              console.log('AdminAnalytics: Realtime subscription closed');
+            }
+          });
+      } catch (error) {
+        console.warn('AdminAnalytics: Error setting up realtime subscription:', error);
+      }
+    };
+
+    setupSubscription();
+
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        try {
+          supabase.removeChannel(channel);
+        } catch (error) {
+          console.warn('AdminAnalytics: Error removing channel:', error);
+        }
+      }
     };
   }, []);
 

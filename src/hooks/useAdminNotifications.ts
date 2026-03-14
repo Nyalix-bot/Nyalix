@@ -265,7 +265,13 @@ export const useAdminNotifications = () => {
           }));
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('useAdminNotifications: Successfully subscribed to orders');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.warn('useAdminNotifications: Failed to subscribe to orders realtime');
+        }
+      });
 
     // Subscribe to new messages
     const messagesChannel = supabase
@@ -301,7 +307,13 @@ export const useAdminNotifications = () => {
           }));
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('useAdminNotifications: Successfully subscribed to messages');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.warn('useAdminNotifications: Failed to subscribe to messages realtime');
+        }
+      });
 
     // Subscribe to new newsletter subscribers
     const newsletterChannel = supabase
@@ -337,7 +349,13 @@ export const useAdminNotifications = () => {
           }));
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('useAdminNotifications: Successfully subscribed to newsletter');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.warn('useAdminNotifications: Failed to subscribe to newsletter realtime');
+        }
+      });
 
     // Subscribe to new profiles (users)
     const usersChannel = supabase
@@ -373,7 +391,13 @@ export const useAdminNotifications = () => {
           }));
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('useAdminNotifications: Successfully subscribed to users');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.warn('useAdminNotifications: Failed to subscribe to users realtime');
+        }
+      });
 
     return () => {
       clearInterval(interval);
